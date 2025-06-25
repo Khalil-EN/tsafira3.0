@@ -58,6 +58,38 @@ const ActivityDAO = {
     return res.rows;
   },
 
+  async search({date, time, freeOnly, location, participants, ageGroups, specialRequirements, activityTypes}) {
+    let query = `SELECT * FROM activities WHERE 1=1`;
+    const params = [];
+    let idx = 1;
+
+    /*if (freeOnly === true) {
+      query += ` AND price = 0`;
+    }
+
+    if (location) {
+      query += ` AND addresse ILIKE $${idx++}`;
+      params.push(`%${location}%`);
+    }*/
+
+    if (activityTypes && activityTypes.length > 0) {
+    query += ` AND activitytype IN (${activityTypes.map(() => `$${idx++}`).join(', ')})`;
+    params.push(...activityTypes);
+  }
+
+    /*if (time) {
+      query += ` AND (
+        to_timestamp(trim(split_part(openinghours, '-', 1)), 'HH12:MI AM')::time <= to_timestamp($${idx}, 'HH24:MI')::time AND
+        to_timestamp(trim(split_part(openinghours, '-', 2)), 'HH12:MI AM')::time >= to_timestamp($${idx++}, 'HH24:MI')::time
+      )`;
+      params.push(time); // e.g., "14:30"
+    }*/
+
+    const result = await pool.query(query, params);
+    return result.rows;
+  },
+
+
 
   async update(id, updates) {
     const fields = [];

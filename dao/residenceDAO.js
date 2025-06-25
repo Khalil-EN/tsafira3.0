@@ -49,6 +49,41 @@ const ResidenceDAO = {
     return res.rows;
   },
 
+  async search({ checkInDate, checkOutDate, minPrice, maxPrice, location }) {
+    let query = `SELECT * FROM ${table} WHERE 1=1`;
+    const params = [];
+    let idx = 1;
+
+    if (minPrice) {
+      query += ` AND priceRange >= $${idx++}`;
+      params.push(Number(minPrice));
+    }
+
+    if (maxPrice) {
+      query += ` AND priceRange <= $${idx++}`;
+      params.push(Number(maxPrice));
+    }
+
+    /*if (location) {
+      query += ` AND address ILIKE $${idx++}`;
+      params.push(`%${location}%`);
+    }*/
+
+    /*if (checkInDate) {
+      query += ` AND checkInDate <= $${idx++}`;
+      params.push(checkInDate);
+    }
+
+    if (checkOutDate) {
+      query += ` AND checkOutDate >= $${idx++}`;
+      params.push(checkOutDate);
+    }*/
+
+    const result = await pool.query(query, params);
+    return result.rows;
+  },
+
+
 
   async update(id, updates) {
     const fields = [];

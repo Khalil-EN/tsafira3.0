@@ -13,7 +13,19 @@ class ResidenceManager {
   }
 
   async listResidences(filter = {}) {
-    return await residenceService.getAllResidences(filter);
+    const residences = await residenceService.getAllResidences(filter);
+    const results = residences.map((row) => ({
+      name: row.name,
+      price: row.pricerange,
+      rating: row.rating,
+      imageurl: row.image,
+      location: row.address,
+      description: row.description,
+      detailimages: row.secondaryimages,
+      reviews: row.numberofreviews,
+      amenities: row.amenities,
+    }));
+    return results
   }
 
   async updateResidence(id, updates) {
@@ -23,6 +35,22 @@ class ResidenceManager {
   async removeResidence(id) {
     return await residenceService.deleteResidence(id);
   }
+  async search(filters) {
+    const residences = await residenceService.search(filters);
+    const results = residences.map((row) => ({
+      name: row.name,
+      price: row.pricerange,
+      rating: row.rating,
+      imageurl: row.image,
+      location: row.address,
+      description: row.description,
+      detailimages: row.secondary_images,
+      reviews: row.numberofreviews,
+      amenities: row.amenities,
+    }));
+    return results;
+}
+
 }
 
 module.exports = new ResidenceManager();

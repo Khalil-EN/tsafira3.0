@@ -25,6 +25,9 @@ class ActivityService {
     const list = await activityDAO.getAll(filters);
     return list.map(createActivityInstance);
   }
+  async search(filters) {
+      return await activityDAO.search(filters);
+  }
 }
 
 module.exports = new ActivityService();

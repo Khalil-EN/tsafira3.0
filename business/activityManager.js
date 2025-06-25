@@ -23,6 +23,21 @@ class ActivityManager {
   async getAllActivities(filters = {}) {
     return await activityService.getAllActivities(filters);
   }
+
+  async search(filters) {
+      const activities = await activityService.search(filters);
+      const results = activities.map((row) => ({
+              name: row.name,
+              //price: row.priceLevel,
+              rating: row.rating,
+              imageurl: row.image,
+              location: row.address,
+              type: row.activitytype,
+              reviews: row.numberofreviews,
+    }));
+    return results;
+  }
+
   normalizeActivityTypes(activityTypes) {
     const mapping = {
       'Museums': 'museum',

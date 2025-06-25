@@ -55,6 +55,42 @@ const RestaurantDAO = {
     return res.rows;
   },
 
+  async search({ location, priceLevel, cuisines, time }) {
+    let query = `SELECT * FROM ${table} WHERE 1=1`;
+    const params = [];
+    let idx = 1;
+
+    if (priceLevel) {
+      query += ` AND priceLevel = $${idx++}`;
+      params.push(priceLevel);
+    }
+
+    /*if (location) {
+      query += ` AND address ILIKE $${idx++}`;
+      params.push(`%${location}%`);
+    }*/
+
+    // Filter by cuisines (tags) – assumes tags is a text[] column
+    if (cuisines && cuisines.length > 0) {
+      query += ` AND tags && $${idx++}::text[]`;
+      params.push(cuisines); // e.g., ['Italian', 'Mexican']
+    }
+
+    // Filter by time if provided
+    /*if (time) {
+      // Example format: "13:00" (24h)
+      query += ` AND (
+        to_timestamp(split_part(openinghours, '-', 1), 'HH12:MI AM') <= to_timestamp($${idx}, 'HH24:MI')
+        AND to_timestamp(split_part(openinghours, '-', 2), 'HH12:MI AM') >= to_timestamp($${idx++}, 'HH24:MI')
+      )`;
+      params.push(time);
+    }*/
+
+    const result = await pool.query(query, params);
+    return result.rows;
+  },
+
+
 
   async update(id, updates) {
     const fields = [];

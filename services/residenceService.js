@@ -16,6 +16,10 @@ const residenceService = {
     const docs = await residenceDAO.getAll(filter);
     return docs.map(createResidenceInstance);
   },
+  async search(filters) {
+  return await residenceDAO.search(filters);
+  },
+
 
   async updateResidence(id, updates) {
     const updated = await residenceDAO.update(id, updates);

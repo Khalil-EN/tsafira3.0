@@ -15,14 +15,7 @@ var express = require("express");
 
 var mongoose = require("mongoose");
 
-var User = require("./schemas/userSchema");
-
-const {getAllHotels, getAllRestaurants, getAllActivities} = require('./testNeon');
-
-
 var app = express();
-
-const {getBestActivities, getBestRestaurantsForActivities, divideIntoParts, transformData, getBudgetperPerson, normalizeActivityTypes} = require("./models/testPlan");
 
 const systemManager = require('./system/SystemManager');
 const { authenticateToken, authorizeRoles } = require('./middlewares/authMiddleware');
@@ -42,8 +35,6 @@ mongoose.connect(mongoURI)
 
 let port = 8000;
 
-const Users = [];
-
 var counter = 0;
 
 
@@ -51,98 +42,6 @@ app.post("/api/hello_world",(req,res) => {
     counter++;
     console.log("Request number ",counter," has been detected!!");
 })
-
-app.post("/api/getData2", (req,res) => {
-    const pdata = {
-        "id" : Users.length+1,
-        "phoneNumber": req.body.phoneNumber,
-        "password": req.body.password 
-    };
-    Users.push(pdata);
-    console.log("Data received : ",pdata);
-    res.status(200).send({
-        "status_code": 200,
-        "message": "User added successfully",
-        "user": pdata
-    });
-})
-
-app.post("/api/getData", (req,res) => {
-  console.log(req.body);
-  console.log("Done \n");
-    const pdata = new User(req.body);
-    pdata.save().then(() => {
-        res.status(200).send({
-            "status_code": 200,
-            "message": "User added successfully",
-            "user": pdata
-        });
-
-    }).catch(err => {
-        console.log(err);
-    })
-});
-
-
-app.post("/api/suggestedplans2",async (req,res) => {
-  console.log(req.body);
-  let { country, city,destinations, interests, groupType,nbrPeople, budget,category, days, day, month, year, accomodationType, hotelLocation, meals, restaurantTags, paymentPreferences, dietaryPreferences } = req.body;
-  const userPreferences = { maxBudget: budget, minRating: 4, preferredAmenities: ["wifi", "breakfast", "air conditioning"], weight: { price: 0.4, rating: 0.3, distance: 0.2, amenities: 0.1 } };
-  //interests = ["nature", "beach", "cultural"]; 
-  const facilities = paymentPreferences.concat(dietaryPreferences);
-  let restauTags = restaurantTags.map(item => item.split(' ')[0]);
-  restauTags = restauTags.map(tag => tag.toLowerCase()); 
-  meals = meals.map(meal => meal.toLowerCase()); 
-  let interest = normalizeActivityTypes(interests);
-  if(groupType === "Just Me"){
-    nbrPeople = 1;
-  }else if(groupType === "A Couple"){
-    nbrPeople = 2;
-  }
-  console.log(nbrPeople);
-
-  const hotels = await getAllHotels();
-
-  const restaurants = await getAllRestaurants();
-
-  const activities = await getAllActivities();
-
-  try {
-    const newBudget = getBudgetperPerson(budget,nbrPeople,days);
-    //console.log('1\n');
-    const bestActivities = getBestActivities(activities, newBudget, days, interest);
-    //console.log('2\n');
-    const bestRestaurantsForEachActivity = getBestRestaurantsForActivities(bestActivities, restaurants, newBudget, days, restauTags,meals,facilities); // morning activities
-    //console.log('3\n');
-    const dividedParts = divideIntoParts(bestRestaurantsForEachActivity);
-    //console.log('4\n');
-    console.log(dividedParts);
-    
-
-    const plan = transformData(dividedParts,meals,hotels,restaurants,userPreferences, nightActivities);
-    
-    //console.log('5\n');
-    console.log(JSON.stringify(plan, null, 2));
-    
-
-    
-      res.status(200).json({
-        status_code: 200,
-        message: "Plan recommended successfully",
-        plan: plan,
-     
-  })
-  } catch (error) {
-    console.error("Error suggesting plan:", error);
-    res.status(500).json({
-      status_code: 500,
-      message: "Internal Server Error",
-      error: error.message,
-    });
-  }
-
-});
-
 
 app.post('/api/register', async (req, res) => {
   try {
@@ -280,13 +179,57 @@ app.get("/api/getRestaurants2",authenticateToken,authorizeRoles('admin','freemiu
   }
 });
 
-app.get("/api/getActivities2",authenticateToken,authorizeRoles('admin','premium'), async (req, res) => {
+app.get("/api/getActivities2",authenticateToken,authorizeRoles('admin','premium','freemium'), async (req, res) => {
   try {
     const activities = await systemManager.getAllActivities();
     res.json(activities);
   } catch (err) {
     console.error("API error:", err);
     res.status(500).json({ error: "Failed to fetch activities" });
+  }
+});
+
+
+app.post('/api/search/hotels',authenticateToken,authorizeRoles('admin','freemium','premium'), async (req, res) => {
+  try {
+
+    const filters = req.body;
+    //console.log(req.body);
+    const results = await systemManager.searchHotels(filters);
+    //console.log(results);
+    res.status(200).json(results);
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
+
+
+app.post('/api/search/restaurants',authenticateToken,authorizeRoles('admin','freemium','premium'), async (req, res) => {
+  try {
+
+    const filters = req.body;
+    //console.log(req.body);
+    const results = await systemManager.searchRestaurants(filters);
+    console.log(results);
+    res.status(200).json(results);
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
+
+app.post('/api/search/activities',authenticateToken,authorizeRoles('admin','freemium','premium'), async (req, res) => {
+  try {
+
+    const filters = req.body;
+    console.log(req.body);
+    const results = await systemManager.searchActivities(filters);
+    //console.log(results);
+    res.status(200).json(results);
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(500).json({ error: 'Search failed' });
   }
 });
 

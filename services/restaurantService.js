@@ -23,6 +23,10 @@ const RestaurantService = {
     return createRestaurantInstance(updated);
   },
 
+  async search(filters) {
+    return await restaurantDAO.search(filters);
+  },
+
   async deleteRestaurant(id) {
     return await restaurantDAO.delete(id);
   }

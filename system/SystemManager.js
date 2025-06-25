@@ -109,20 +109,11 @@ class SystemManager {
   }
 
   async getAllHotels(){
-    const residences = await residenceManager.listResidences();
-    const results = residences.map((row) => ({
-      name: row.name,
-      price: row.pricerange,
-      rating: row.rating,
-      imageurl: row.image,
-      location: row.address,
-      description: row.description,
-      detailimages: row.secondaryimages,
-      reviews: row.numberofreviews,
-      amenities: row.amenities,
-    }));
-    console.log(results);
-    return results;
+    return await residenceManager.listResidences();
+  }
+
+  async searchHotels(filters){
+    return await residenceManager.search(filters);
   }
 
 
@@ -159,6 +150,17 @@ class SystemManager {
 
   }
 
+  async searchRestaurants(filters){
+    if (filters.minPrice !== undefined && filters.maxPrice !== undefined) {
+      filters.priceLevel = restaurantManager.convertPriceRangeToLevel(filters.minPrice, filters.maxPrice);
+      delete filters.minPrice;
+      delete filters.maxPrice;
+    } 
+    filters.cuisines = restaurantManager.cleanTypeofCuisine(filters.cuisines);
+    console.log(filters);
+    return await restaurantManager.search(filters);
+  }
+
   async notifyNewRestaurant(restaurant) {
     // Placeholder: notify admin, refresh cache, index in search, etc.
     console.log(`New restaurant added: ${restaurant.name}`);
@@ -187,10 +189,14 @@ class SystemManager {
     }));
     return results;
   }
+
+  async searchActivities(filters){
+    
+    filters.activityTypes = activityManager.normalizeActivityTypes(filters.activityTypes);
+    console.log(filters);
+    return await activityManager.search(filters);
+  }
   
-
-
-
 
   async logNewActivity(activity) {
   console.log(`📝 New activity logged: ${activity.name} (${activity.id})`);
@@ -207,11 +213,7 @@ class SystemManager {
     if(!(await userManager.checkSuggestionLimit(userId))){
       return false;
     }
-
-
-
     console.log('[SystemManager] Suggesting itinerary for:', userPreferences);
-
 
     let { country, city,destinations, interests, groupType,nbrPeople, budget,category, days, day, month, year, accomodationType, hotelLocation, meals, restaurantTags, paymentPreferences, dietaryPreferences } = userPreferences;
     const userPreferences2 = { maxBudget: budget, minRating: 4, preferredAmenities: ["wifi", "breakfast", "air conditioning"], weight: { price: 0.4, rating: 0.3, distance: 0.2, amenities: 0.1 } };
